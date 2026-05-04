@@ -1,0 +1,660 @@
+================================================================================
+ECOMMERCE BACKEND API — MOBILE APP INTEGRATION GUIDE
+================================================================================
+
+You are building a mobile app (React Native / Flutter / native) that consumes
+this Next.js backend. This document is the single source of truth for every
+endpoint, request body, response shape, and auth rule. Follow it exactly.
+
+--------------------------------------------------------------------------------
+GLOBAL CONVENTIONS
+--------------------------------------------------------------------------------
+
+BASE URL
+  Local dev:   http://localhost:3000
+  Production:  https://<your-deployed-domain>
+  All API paths begin with /api
+
+CONTENT TYPE
+  All POST/PUT/PATCH bodies are JSON unless explicitly noted as multipart.
+  Always send: Content-Type: application/json
+
+STANDARD RESPONSE SHAPE
+  Success:
+    {
+      "success": true,
+      "message": "<optional>",
+      "data": <payload — object | array | null>
+    }
+
+  Error:
+    {
+      "success": false,
+      "message": "Human readable error",
+      "errors": { "field": "field-specific message" }   // optional
+    }
+
+HTTP STATUS CODES
+  200  OK — successful GET / PUT / PATCH / DELETE
+  201  Created — successful POST that creates a resource
+  400  Bad Request — validation failed, invalid IDs, malformed data
+  401  Unauthorized — missing or invalid admin token
+  404  Not Found — resource doesn't exist
+  429  Too Many Requests — review spam protection
+  500  Server Error
+
+AUTHENTICATION (ADMIN ONLY — customers do NOT log in)
+  After POST /api/admin/login, you receive a JWT token in the response body.
+  STORE IT SECURELY (Keychain on iOS / EncryptedSharedPreferences on Android).
+  Send on every admin request:
+
+      Authorization: Bearer <JWT_TOKEN>
+
+  The web app uses an httpOnly cookie called `admin_token`. Mobile clients MUST
+  use the Authorization header instead — cookies don't apply to native apps.
+  Token expires after 7 days. Handle 401 by routing user back to login.
+
+CUSTOMER FLOW
+  Customers are GUEST USERS — no signup, no login. They:
+    1. Browse products (public GET endpoints)
+    2. Place an order with their name/phone/address (POST /api/orders)
+    3. Pay via Easypaisa (POST /api/payment/initiate → redirect URL)
+       OR choose Cash on Delivery
+    4. Track order using the returned order ID (GET /api/orders/:id)
+
+================================================================================
+1. ADMIN AUTHENTICATION
+================================================================================
+
+--------------------------------------------------------------------------------
+1.1  POST /api/admin/login
+--------------------------------------------------------------------------------
+PURPOSE: Log in as admin and receive a JWT.
+AUTH:    Public
+
+REQUEST BODY
+  {
+    "email": "admin@example.com",
+    "password": "yourpassword"
+  }
+
+VALIDATION
+  email      required, valid email format
+  password   required, minimum 4 characters
+
+RESPONSE 200
+  {
+    "success": true,
+    "message": "Login successful",
+    "data": {
+      "email": "admin@example.com",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6..."
+    }
+  }
+
+ERROR CASES
+  400 — invalid input (bad email format, missing fields)
+  401 — invalid credentials
+
+MOBILE NOTES
+  Save `data.token` securely. Use it in Authorization: Bearer <token> on every
+  admin call afterward.
+
+--------------------------------------------------------------------------------
+1.2  POST /api/admin/logout
+--------------------------------------------------------------------------------
+PURPOSE: Invalidate the admin session (clears server cookie).
+AUTH:    Admin
+
+REQUEST BODY: none
+RESPONSE 200:
+  { "success": true, "message": "Logged out successfully" }
+
+MOBILE NOTES
+  On mobile, also delete the locally stored token regardless of server response.
+
+================================================================================
+2. PRODUCTS (PUBLIC + ADMIN)
+================================================================================
+
+PRODUCT OBJECT SHAPE (returned by API)
+  {
+    "_id": "65f1a2b3c4d5e6f7a8b9c0d1",
+    "name": "Embroidered Abaya",
+    "description": "Premium hand-embroidered abaya...",
+    "price": 4500,
+    "images": ["https://res.cloudinary.com/.../img1.jpg", "..."],
+    "category": "Islamic",                  // "Child" | "Women" | "Islamic"
+    "stock": 25,
+    "averageRating": 4.5,
+    "numReviews": 12,
+    "isFeatured": true,
+    "slug": "embroidered-abaya-lk2j3h4",
+    "reviews": [
+      {
+        "_id": "...",
+        "name": "Ayesha",
+        "comment": "Beautiful fabric.",
+        "rating": 5,
+        "createdAt": "2026-04-15T10:00:00.000Z"
+      }
+    ],
+    "createdAt": "2026-01-12T08:30:00.000Z",
+    "updatedAt": "2026-04-15T10:00:00.000Z"
+  }
+
+  NOTE: review.ipAddress is stripped from API responses for privacy.
+
+--------------------------------------------------------------------------------
+2.1  GET /api/products
+--------------------------------------------------------------------------------
+PURPOSE: List products with filtering, search, sorting, pagination.
+AUTH:    Public
+
+QUERY PARAMETERS (all optional)
+  search     string                Full-text search on name + description
+  category   "Child" | "Women" | "Islamic"
+  minPrice   number                Inclusive
+  maxPrice   number                Inclusive
+  minRating  number                e.g. 4 returns products with avg ≥ 4
+  sort       string                One of:
+                                     "newest"      (default)
+                                     "price-asc"
+                                     "price-desc"
+                                     "rating"
+                                     "featured"
+  featured   "true"                Only featured products
+  page       integer (default 1)
+  limit      integer (default 12, max 50)
+
+EXAMPLE
+  GET /api/products?category=Islamic&minPrice=2000&sort=price-asc&page=1&limit=20
+
+RESPONSE 200
+  {
+    "success": true,
+    "data": {
+      "products": [ <Product>, ... ],
+      "pagination": {
+        "page": 1,
+        "limit": 20,
+        "total": 87,
+        "totalPages": 5
+      }
+    }
+  }
+
+--------------------------------------------------------------------------------
+2.2  GET /api/products/:id
+--------------------------------------------------------------------------------
+PURPOSE: Get a single product including its reviews.
+AUTH:    Public
+
+PATH PARAM
+  id    MongoDB ObjectId (24-char hex)
+
+RESPONSE 200
+  { "success": true, "data": <Product> }
+
+ERRORS
+  400 — invalid ObjectId format
+  404 — product not found
+
+--------------------------------------------------------------------------------
+2.3  POST /api/products            (CREATE — admin only)
+--------------------------------------------------------------------------------
+PURPOSE: Create a new product.
+AUTH:    Admin (Authorization: Bearer <token>)
+
+REQUEST BODY
+  {
+    "name": "Embroidered Abaya",
+    "description": "Premium hand-embroidered abaya with cuff detailing.",
+    "price": 4500,
+    "images": [
+      "https://res.cloudinary.com/.../image1.jpg",
+      "https://res.cloudinary.com/.../image2.jpg"
+    ],
+    "category": "Islamic",
+    "stock": 25,
+    "isFeatured": false
+  }
+
+VALIDATION RULES
+  name         required, string, 2–200 chars
+  description  required, string, ≥ 10 chars
+  price        required, number, ≥ 0
+  images       required, array of valid URLs, ≥ 1 item
+  category     required, one of: "Child" | "Women" | "Islamic"
+  stock        required, integer, ≥ 0
+  isFeatured   optional, boolean, default false
+
+IMPORTANT — IMAGE URLS
+  The `images` array must contain Cloudinary URLs (or any publicly reachable
+  image URL). Mobile flow:
+    1. User picks image(s) from device.
+    2. Convert each to base64 data URI (data:image/jpeg;base64,...).
+    3. POST each to /api/admin/upload to get a Cloudinary URL.
+    4. Pass the returned URLs in this `images` array.
+
+RESPONSE 201
+  {
+    "success": true,
+    "message": "Product created successfully",
+    "data": <Product>
+  }
+
+ERRORS
+  400 — validation failed (errors object lists each invalid field)
+  401 — not authenticated as admin
+
+--------------------------------------------------------------------------------
+2.4  PUT /api/products/:id         (UPDATE — admin only)
+--------------------------------------------------------------------------------
+PURPOSE: Partial-update a product. Send only the fields you want to change.
+AUTH:    Admin
+
+PATH PARAM
+  id    MongoDB ObjectId
+
+REQUEST BODY (all fields optional — partial update)
+  {
+    "price": 3999,
+    "stock": 12,
+    "isFeatured": true
+  }
+
+  Same validation rules as POST /api/products, but every field is optional.
+
+RESPONSE 200
+  {
+    "success": true,
+    "message": "Product updated successfully",
+    "data": <Updated Product>
+  }
+
+ERRORS
+  400 — invalid ObjectId or validation failed
+  401 — not authenticated
+  404 — product not found
+
+--------------------------------------------------------------------------------
+2.5  DELETE /api/products/:id      (admin only)
+--------------------------------------------------------------------------------
+PURPOSE: Permanently delete a product.
+AUTH:    Admin
+
+PATH PARAM
+  id    MongoDB ObjectId
+
+REQUEST BODY: none
+
+RESPONSE 200
+  {
+    "success": true,
+    "message": "Product deleted successfully",
+    "data": null
+  }
+
+ERRORS
+  400 — invalid ObjectId
+  401 — not authenticated
+  404 — product not found
+
+================================================================================
+3. PRODUCT REVIEWS (PUBLIC)
+================================================================================
+
+--------------------------------------------------------------------------------
+3.1  GET /api/products/:id/reviews
+--------------------------------------------------------------------------------
+PURPOSE: List all reviews for a product (newest first).
+AUTH:    Public
+
+RESPONSE 200
+  {
+    "success": true,
+    "data": {
+      "reviews": [
+        {
+          "_id": "...",
+          "name": "Ayesha",
+          "comment": "Beautiful fabric.",
+          "rating": 5,
+          "createdAt": "2026-04-15T10:00:00.000Z"
+        }
+      ],
+      "averageRating": 4.5,
+      "numReviews": 12
+    }
+  }
+
+--------------------------------------------------------------------------------
+3.2  POST /api/products/:id/reviews
+--------------------------------------------------------------------------------
+PURPOSE: Submit a review as a guest.
+AUTH:    Public
+
+REQUEST BODY
+  {
+    "name": "Ayesha",
+    "comment": "Beautiful fabric and fast delivery.",
+    "rating": 5
+  }
+
+VALIDATION
+  name     required, string, 2–50 chars
+  comment  required, string, 5–1000 chars
+  rating   required, integer, 1–5
+
+SPAM PROTECTION (server-enforced)
+  - Same IP cannot review same product within 24 hours → 429
+  - Same name cannot review same product within 1 hour  → 429
+
+RESPONSE 201
+  {
+    "success": true,
+    "message": "Review added successfully",
+    "data": {
+      "review": { "name": "Ayesha", "comment": "...", "rating": 5, "createdAt": "..." },
+      "averageRating": 4.6,
+      "numReviews": 13
+    }
+  }
+
+ERRORS
+  400 — validation failed
+  404 — product not found
+  429 — rate limited (show "please try later" message)
+
+================================================================================
+4. ORDERS
+================================================================================
+
+ORDER OBJECT SHAPE
+  {
+    "_id": "65f1...",
+    "orderNumber": "ORD-LK2J3H-A8B9",        // auto-generated, human-friendly
+    "customerName": "Fatima Khan",
+    "email": "fatima@example.com",            // optional
+    "phone": "+923001234567",
+    "address": "House 12, Street 4, F-7",
+    "city": "Islamabad",
+    "products": [
+      {
+        "productId": "65f1a2b3c4d5e6f7a8b9c0d1",
+        "name": "Embroidered Abaya",
+        "price": 4500,
+        "quantity": 1,
+        "image": "https://res.cloudinary.com/.../img1.jpg"
+      }
+    ],
+    "totalAmount": 4500,
+    "paymentMethod": "easypaisa",             // "easypaisa" | "cod"
+    "paymentStatus": "pending",               // "pending" | "paid" | "failed" | "refunded"
+    "orderStatus": "pending",                 // "pending" | "processing" | "shipped" | "delivered" | "cancelled"
+    "transactionId": "TXN123...",             // present after payment initiate
+    "notes": "Please call before delivery",   // optional
+    "createdAt": "2026-05-04T10:00:00.000Z",
+    "updatedAt": "2026-05-04T10:00:00.000Z"
+  }
+
+--------------------------------------------------------------------------------
+4.1  POST /api/orders               (place an order — public/guest)
+--------------------------------------------------------------------------------
+PURPOSE: Create a new order. No login required.
+AUTH:    Public
+
+REQUEST BODY
+  {
+    "customerName": "Fatima Khan",
+    "email": "fatima@example.com",
+    "phone": "+923001234567",
+    "address": "House 12, Street 4, F-7",
+    "city": "Islamabad",
+    "products": [
+      { "productId": "65f1a2b3c4d5e6f7a8b9c0d1", "quantity": 1 },
+      { "productId": "65f2b3c4d5e6f7a8b9c0d1e2", "quantity": 2 }
+    ],
+    "paymentMethod": "easypaisa",
+    "notes": "Please call before delivery"
+  }
+
+VALIDATION
+  customerName    required, 2–100 chars
+  email           optional, valid email or empty string
+  phone           required, 7–20 chars, only digits + - ( ) space
+  address         required, ≥ 5 chars
+  city            required, ≥ 2 chars
+  products        required, non-empty array
+    productId     required, valid ObjectId
+    quantity      required, integer ≥ 1
+  paymentMethod   "easypaisa" (default) | "cod"
+  notes           optional string
+
+SERVER-SIDE BEHAVIOUR
+  - Prices and totalAmount are RECALCULATED on the server using current DB
+    prices. The client price is ignored. Never trust client-side totals.
+  - Stock is checked but NOT decremented at this step. Stock is decremented
+    on payment success — this avoids losing stock to abandoned orders.
+  - Order is created with paymentStatus="pending", orderStatus="pending".
+
+RESPONSE 201
+  {
+    "success": true,
+    "message": "Order created successfully",
+    "data": <Order>
+  }
+  Save `data._id` and use it in the next step.
+
+ERRORS
+  400 — validation failed, invalid product ID, product not found,
+        insufficient stock (message will say which product)
+
+NEXT STEP
+  After receiving the order, immediately call POST /api/payment/initiate
+  with the returned _id to start payment.
+
+--------------------------------------------------------------------------------
+4.2  GET /api/orders/:id            (track order — public)
+--------------------------------------------------------------------------------
+PURPOSE: Customer fetches their order to see status.
+AUTH:    Public (no login — kept simple since there's no customer auth)
+
+RESPONSE 200
+  { "success": true, "data": <Order> }
+
+MOBILE NOTES
+  Persist the order _id locally so the user can re-open the tracking screen
+  later. Refresh on pull-to-refresh.
+
+ERRORS
+  400 — invalid ObjectId
+  404 — order not found
+
+--------------------------------------------------------------------------------
+4.3  GET /api/orders                (list all orders — admin only)
+--------------------------------------------------------------------------------
+PURPOSE: Admin dashboard order list.
+AUTH:    Admin
+
+QUERY PARAMETERS (all optional)
+  page          integer (default 1)
+  limit         integer (default 20, max 50)
+  orderStatus   "pending" | "processing" | "shipped" | "delivered" | "cancelled"
+  paymentStatus "pending" | "paid" | "failed" | "refunded"
+
+RESPONSE 200
+  {
+    "success": true,
+    "data": {
+      "orders": [ <Order>, ... ],
+      "pagination": { "page": 1, "limit": 20, "total": 87, "totalPages": 5 }
+    }
+  }
+
+--------------------------------------------------------------------------------
+4.4  PATCH /api/orders/:id          (update status — admin only)
+--------------------------------------------------------------------------------
+PURPOSE: Update an order's status.
+AUTH:    Admin
+
+REQUEST BODY (all fields optional)
+  {
+    "orderStatus": "shipped",
+    "paymentStatus": "paid",
+    "notes": "Dispatched via TCS"
+  }
+
+VALIDATION
+  orderStatus     "pending" | "processing" | "shipped" | "delivered" | "cancelled"
+  paymentStatus   "pending" | "paid" | "failed" | "refunded"
+  notes           string
+
+RESPONSE 200
+  { "success": true, "message": "Order updated successfully", "data": <Order> }
+
+ERRORS
+  400 — invalid ObjectId or invalid update data
+  401 — not authenticated
+  404 — order not found
+
+================================================================================
+5. PAYMENT (EASYPAISA)
+================================================================================
+
+--------------------------------------------------------------------------------
+5.1  POST /api/payment/initiate
+--------------------------------------------------------------------------------
+PURPOSE: Start payment for an order. Returns a redirect URL for Easypaisa,
+         or a confirmation if COD.
+AUTH:    Public
+
+REQUEST BODY
+  { "orderId": "65f1a2b3c4d5e6f7a8b9c0d1" }
+
+RESPONSE 200 (Easypaisa)
+  {
+    "success": true,
+    "data": {
+      "redirectUrl": "https://easypaisa.com.pk/...",
+      "transactionId": "TXN123ABC",
+      "orderId": "65f1a2b3c4d5e6f7a8b9c0d1"
+    }
+  }
+
+RESPONSE 200 (COD)
+  {
+    "success": true,
+    "data": {
+      "paymentMethod": "cod",
+      "orderId": "65f1a2b3c4d5e6f7a8b9c0d1",
+      "message": "Order placed. Payment will be collected on delivery."
+    }
+  }
+
+MOBILE NOTES
+  - For Easypaisa: open `redirectUrl` in an in-app browser
+    (react-native-inappbrowser-reborn / flutter_web_browser). On callback URL
+    match, close the browser and route to the order tracking screen.
+  - For COD: skip the browser, go straight to a "thank you" screen.
+
+ERRORS
+  400 — invalid input or order already paid
+  404 — order not found
+
+--------------------------------------------------------------------------------
+5.2  POST /api/payment/easypaisa/callback
+--------------------------------------------------------------------------------
+THIS IS A SERVER-TO-SERVER WEBHOOK.
+The mobile app does NOT call this endpoint directly. Easypaisa calls it after
+payment completes. The mobile app should poll GET /api/orders/:id (or just
+re-open the tracking screen) to see the updated paymentStatus.
+
+================================================================================
+6. IMAGE UPLOAD (ADMIN)
+================================================================================
+
+--------------------------------------------------------------------------------
+6.1  POST /api/admin/upload
+--------------------------------------------------------------------------------
+PURPOSE: Upload a single image to Cloudinary and receive its hosted URL.
+AUTH:    Admin
+
+REQUEST BODY (JSON, NOT multipart)
+  {
+    "image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD..."
+  }
+
+CONSTRAINTS
+  - Must start with "data:image/" (jpeg, png, webp, etc.)
+  - Max ~5 MB after base64 overhead (server enforces 7 MB body)
+
+RESPONSE 200
+  {
+    "success": true,
+    "message": "Image uploaded successfully",
+    "data": { "url": "https://res.cloudinary.com/.../image.jpg" }
+  }
+
+MOBILE FLOW
+  1. User picks/captures an image (image_picker, react-native-image-picker).
+  2. Read file as base64. Prepend the appropriate "data:image/jpeg;base64,"
+     prefix.
+  3. POST to /api/admin/upload.
+  4. Use the returned `url` in the product `images[]` array when calling
+     POST /api/products or PUT /api/products/:id.
+
+  Repeat per image — the endpoint accepts ONE image per call.
+
+ERRORS
+  400 — missing image, invalid format, too large
+  401 — not authenticated
+  500 — Cloudinary not configured on server
+
+================================================================================
+7. END-TO-END MOBILE FLOWS
+================================================================================
+
+--------------------------------------------------------------------------------
+CUSTOMER PURCHASE FLOW
+--------------------------------------------------------------------------------
+  1. GET  /api/products?page=1&limit=20            // home / list screen
+  2. GET  /api/products/:id                         // detail screen
+  3. (User adds items to local cart — no API call)
+  4. POST /api/orders                               // checkout submit
+        → save returned _id
+  5. POST /api/payment/initiate { orderId }
+        → if easypaisa: open redirectUrl in in-app browser
+        → if cod: show thank-you immediately
+  6. GET  /api/orders/:id                           // tracking screen
+        (poll on pull-to-refresh)
+
+--------------------------------------------------------------------------------
+ADMIN FLOW
+--------------------------------------------------------------------------------
+  1. POST   /api/admin/login                        // get token
+        → store in Keychain / EncryptedSharedPreferences
+  2. GET    /api/products                           // dashboard list
+  3. POST   /api/admin/upload (× N images)          // gather Cloudinary URLs
+  4. POST   /api/products { ..., images: [urls] }   // create product
+  5. PUT    /api/products/:id { stock: 5 }          // edit
+  6. DELETE /api/products/:id                       // remove
+  7. GET    /api/orders?orderStatus=pending         // order management
+  8. PATCH  /api/orders/:id { orderStatus: "shipped" }
+  9. POST   /api/admin/logout
+
+--------------------------------------------------------------------------------
+ERROR HANDLING (MOBILE-SIDE)
+--------------------------------------------------------------------------------
+  - Always check `response.success`. If false, show `response.message`.
+  - On 401 from any admin endpoint: clear stored token and route to login.
+  - On 429: show user-friendly "please wait" message. Don't retry immediately.
+  - On 500: generic "something went wrong" plus a retry button.
+  - On network failure: show retry UI; cache the last successful product list.
+  - If `response.errors` is present (validation): map each field to its
+    corresponding form input and show inline.
+
+================================================================================
+END OF DOCUMENT
+================================================================================
