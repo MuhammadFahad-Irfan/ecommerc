@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight, Truck, ShieldCheck, RefreshCw, Heart } from 'lucide-react';
 import dbConnect from '@/lib/db';
 import Product from '@/models/Product';
@@ -94,10 +95,14 @@ export default async function HomePage() {
                 className="aspect-square rounded-full bg-gradient-to-br from-primary-200 to-primary-400 opacity-30 absolute inset-0 blur-3xl"
                 aria-hidden
               />
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=800&q=80"
                 alt="Modest fashion collection"
-                className="rounded-2xl shadow-2xl relative z-10 w-full"
+                width={800}
+                height={800}
+                priority
+                sizes="(min-width: 768px) 50vw, 100vw"
+                className="rounded-2xl shadow-2xl relative z-10 w-full h-auto"
               />
             </div>
           </div>
@@ -140,10 +145,12 @@ export default async function HomePage() {
               href={`/products?category=${cat.slug}`}
               className="group relative aspect-[4/5] rounded-2xl overflow-hidden image-zoom"
             >
-              <img
+              <Image
                 src={cat.image}
                 alt={cat.name}
-                className="absolute inset-0 w-full h-full object-cover"
+                fill
+                sizes="(min-width: 768px) 33vw, 100vw"
+                className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
