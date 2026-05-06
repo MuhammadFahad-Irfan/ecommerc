@@ -28,6 +28,7 @@ export default function Navbar() {
     { href: '/products?category=Women', label: 'Women' },
     { href: '/products?category=Child', label: 'Children' },
     { href: '/products?category=Islamic', label: 'Islamic' },
+    { href: '/track-order', label: 'Track Order' },
   ];
 
   return (

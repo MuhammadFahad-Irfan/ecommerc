@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import mongoose from 'mongoose';
 import dbConnect from '@/lib/db';
 import Product from '@/models/Product';
 import { successResponse, asyncHandler, ApiError } from '@/lib/apiHelpers';
@@ -25,6 +26,7 @@ export const GET = asyncHandler(async (req: NextRequest) => {
 
   const { searchParams } = new URL(req.url);
 
+  console.log('Received GET /api/products with params:', searchParams.toString());
   const search = searchParams.get('search') || '';
   const category = searchParams.get('category') || '';
   const minPrice = parseFloat(searchParams.get('minPrice') || '0');
@@ -37,7 +39,25 @@ export const GET = asyncHandler(async (req: NextRequest) => {
 
   // Build filter
   const filter: Record<string, unknown> = {};
-  if (search) filter.$text = { $search: search };
+  if (search) {
+    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const rx = { $regex: escaped, $options: 'i' };
+    const orClauses: Record<string, unknown>[] = [
+      { name: rx },
+      { description: rx },
+      { category: rx },
+      { slug: rx },
+      { 'reviews.name': rx },
+      { 'reviews.comment': rx },
+    ];
+    const asNumber = Number(search);
+    if (!Number.isNaN(asNumber) && search.trim() !== '') {
+      orClauses.push({ price: asNumber });
+      orClauses.push({ stock: asNumber });
+      orClauses.push({ averageRating: asNumber });
+    }
+    filter.$or = orClauses;
+  }
   if (category) filter.category = category;
   if (featured) filter.isFeatured = true;
   if (minPrice > 0 || maxPrice > 0) {
@@ -67,7 +87,16 @@ export const GET = asyncHandler(async (req: NextRequest) => {
 
   const skip = (page - 1) * limit;
 
-  const [products, total] = await Promise.all([
+  console.log('Constructed filter:', filter);
+  const [
+    products,
+    total,
+    totalAll,
+    totalFeatured,
+    totalInStock,
+    totalOutOfStock,
+    byCategoryRaw,
+  ] = await Promise.all([
     Product.find(filter)
       .select('-reviews.ipAddress')
       .sort(sortOption)
@@ -75,7 +104,19 @@ export const GET = asyncHandler(async (req: NextRequest) => {
       .limit(limit)
       .lean(),
     Product.countDocuments(filter),
+    Product.countDocuments({}),
+    Product.countDocuments({ isFeatured: true }),
+    Product.countDocuments({ stock: { $gt: 0 } }),
+    Product.countDocuments({ stock: 0 }),
+    Product.aggregate<{ _id: string; count: number }>([
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+    ]),
   ]);
+
+  const byCategory = byCategoryRaw.reduce<Record<string, number>>((acc, row) => {
+    acc[row._id] = row.count;
+    return acc;
+  }, {});
 
   return successResponse({
     products,
@@ -84,6 +125,13 @@ export const GET = asyncHandler(async (req: NextRequest) => {
       limit,
       total,
       totalPages: Math.ceil(total / limit),
+    },
+    counts: {
+      total: totalAll,
+      featured: totalFeatured,
+      inStock: totalInStock,
+      outOfStock: totalOutOfStock,
+      byCategory,
     },
   });
 });
@@ -109,4 +157,50 @@ export const POST = asyncHandler(async (req: NextRequest) => {
 
   const product = await Product.create(result.data);
   return successResponse(product, 'Product created successfully', 201);
+});
+
+/**
+ * DELETE /api/products
+ * Admin-only: delete multiple products by ID, processing each one at a time.
+ * Body: { ids: string[] }
+ * Returns a per-ID result so the caller can see which deletions succeeded.
+ */
+export const DELETE = asyncHandler(async (req: NextRequest) => {
+  requireAdmin(req);
+  await dbConnect();
+
+  const body = await req.json().catch(() => null);
+  const ids: unknown = body?.ids;
+
+  if (!Array.isArray(ids) || ids.length === 0) {
+    throw new ApiError('Provide a non-empty "ids" array', 400);
+  }
+  if (ids.length > 100) {
+    throw new ApiError('Cannot delete more than 100 products in one request', 400);
+  }
+
+  const results: Array<{ id: string; success: boolean; error?: string }> = [];
+
+  for (const raw of ids) {
+    const id = String(raw);
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      results.push({ id, success: false, error: 'Invalid ID' });
+      continue;
+    }
+
+    const deleted = await Product.findByIdAndDelete(id);
+    results.push(
+      deleted
+        ? { id, success: true }
+        : { id, success: false, error: 'Not found' }
+    );
+  }
+
+  const deletedCount = results.filter((r) => r.success).length;
+
+  return successResponse(
+    { deletedCount, results },
+    `Deleted ${deletedCount} of ${ids.length} product(s)`
+  );
 });

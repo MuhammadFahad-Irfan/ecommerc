@@ -1,5 +1,11 @@
 import { v2 as cloudinary } from 'cloudinary';
 
+console.log({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
+})
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -19,6 +25,7 @@ export async function uploadToCloudinary(
     throw new Error('Cloudinary is not configured. Set CLOUDINARY_* env vars.');
   }
 
+  console.log('Uploading to Cloudinary...', { folder }, fileData.substring(0, 30) + '...');
   const result = await cloudinary.uploader.upload(fileData, {
     folder,
     resource_type: 'image',
