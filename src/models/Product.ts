@@ -8,6 +8,10 @@ export interface IReviewDocument {
   createdAt: Date;
 }
 
+export type ProductType = 'abaya' | 'hijab' | 'cap' | 'frock' | 'set' | 'other';
+export type Occasion = 'daily' | 'wedding' | 'eid' | 'prayer' | 'school' | 'gift' | 'travel';
+export type SuitableFor = 'women' | 'kids';
+
 export interface IProductDocument extends Document {
   name: string;
   description: string;
@@ -15,6 +19,12 @@ export interface IProductDocument extends Document {
   images: string[];
   videoUrl?: string;
   category: 'Child' | 'Women' | 'Islamic';
+  productType?: ProductType;
+  occasions: Occasion[];
+  tags: string[];
+  suitableFor: SuitableFor[];
+  ageGroup: string[];
+  matchingItems: mongoose.Types.ObjectId[];
   stock: number;
   reviews: IReviewDocument[];
   averageRating: number;
@@ -111,6 +121,39 @@ const ProductSchema = new Schema<IProductDocument>(
       default: false,
       index: true,
     },
+    productType: {
+      type: String,
+      enum: ['abaya', 'hijab', 'cap', 'frock', 'set', 'other'],
+      index: true,
+    },
+    occasions: {
+      type: [String],
+      enum: ['daily', 'wedding', 'eid', 'prayer', 'school', 'gift', 'travel'],
+      default: [],
+      index: true,
+    },
+    tags: {
+      type: [String],
+      default: [],
+      index: true,
+    },
+    suitableFor: {
+      type: [String],
+      enum: ['women', 'kids'],
+      default: [],
+      index: true,
+    },
+    ageGroup: {
+      type: [String],
+      default: [],
+    },
+    matchingItems: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Product',
+        default: [],
+      },
+    ],
     slug: {
       type: String,
       unique: true,

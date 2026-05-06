@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Toaster } from 'react-hot-toast';
 import { CartProvider } from '@/context/CartContext';
+import { BudgetProvider } from '@/context/BudgetContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import './globals.css';
@@ -43,19 +44,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="flex flex-col min-h-screen">
         <CartProvider>
-          <Navbar />
-          <main className="flex-grow">{children}</main>
-          <Footer />
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 3000,
-              style: {
-                background: '#363636',
-                color: '#fff',
-              },
-            }}
-          />
+          <BudgetProvider>
+            <Navbar />
+            <main className="flex-grow">{children}</main>
+            <Footer />
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 3000,
+                style: {
+                  background: '#363636',
+                  color: '#fff',
+                },
+              }}
+            />
+          </BudgetProvider>
         </CartProvider>
       </body>
     </html>

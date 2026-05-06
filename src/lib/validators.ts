@@ -20,6 +20,17 @@ export const productSchema = z.object({
     .optional()
     .or(z.literal('').transform(() => undefined)),
   category: z.enum(['Child', 'Women', 'Islamic']),
+  productType: z
+    .enum(['abaya', 'hijab', 'cap', 'frock', 'set', 'other'])
+    .optional(),
+  occasions: z
+    .array(z.enum(['daily', 'wedding', 'eid', 'prayer', 'school', 'gift', 'travel']))
+    .optional()
+    .default([]),
+  tags: z.array(z.string().trim().min(1)).optional().default([]),
+  suitableFor: z.array(z.enum(['women', 'kids'])).optional().default([]),
+  ageGroup: z.array(z.string().trim()).optional().default([]),
+  matchingItems: z.array(z.string()).optional().default([]),
   stock: z.number().int().min(0),
   isFeatured: z.boolean().optional().default(false),
 });

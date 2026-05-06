@@ -2,6 +2,9 @@
 // Keeping these in sync makes future mobile app integration easier.
 
 export type Category = 'Child' | 'Women' | 'Islamic';
+export type ProductType = 'abaya' | 'hijab' | 'cap' | 'frock' | 'set' | 'other';
+export type Occasion = 'daily' | 'wedding' | 'eid' | 'prayer' | 'school' | 'gift' | 'travel';
+export type SuitableFor = 'women' | 'kids';
 
 export interface IReview {
   _id?: string;
@@ -20,6 +23,12 @@ export interface IProduct {
   images: string[];
   videoUrl?: string;
   category: Category;
+  productType?: ProductType;
+  occasions?: Occasion[];
+  tags?: string[];
+  suitableFor?: SuitableFor[];
+  ageGroup?: string[];
+  matchingItems?: string[];
   stock: number;
   reviews: IReview[];
   averageRating: number;

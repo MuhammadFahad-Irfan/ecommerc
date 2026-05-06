@@ -6,7 +6,14 @@ import Image from 'next/image';
 import toast from 'react-hot-toast';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { apiPost, apiPut } from '@/lib/api';
-import type { IProduct, Category } from '@/types';
+import MatchingItemsPicker from './MatchingItemsPicker';
+import type {
+  IProduct,
+  Category,
+  ProductType,
+  Occasion,
+  SuitableFor,
+} from '@/types';
 
 interface ProductFormProps {
   product?: IProduct;
@@ -14,6 +21,10 @@ interface ProductFormProps {
 }
 
 const CATEGORIES: Category[] = ['Child', 'Women', 'Islamic'];
+const PRODUCT_TYPES: ProductType[] = ['abaya', 'hijab', 'cap', 'frock', 'set', 'other'];
+const OCCASIONS: Occasion[] = ['daily', 'wedding', 'eid', 'prayer', 'school', 'gift', 'travel'];
+const SUITABLE_FOR: SuitableFor[] = ['women', 'kids'];
+const AGE_GROUPS = ['3-5', '6-10', '11-14', 'adult'];
 
 export default function ProductForm({ product, mode }: ProductFormProps) {
   const router = useRouter();
@@ -25,11 +36,40 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
     description: product?.description || '',
     price: product?.price?.toString() || '',
     stock: product?.stock?.toString() || '',
-    category: product?.category || 'Women' as Category,
-    images: product?.images || [] as string[],
+    category: product?.category || ('Women' as Category),
+    productType: (product?.productType || '') as ProductType | '',
+    occasions: (product?.occasions || []) as Occasion[],
+    tags: (product?.tags || []) as string[],
+    suitableFor: (product?.suitableFor || []) as SuitableFor[],
+    ageGroup: (product?.ageGroup || []) as string[],
+    matchingItems: (product?.matchingItems || []) as string[],
+    images: product?.images || ([] as string[]),
     videoUrl: product?.videoUrl || '',
     isFeatured: product?.isFeatured || false,
   });
+  const [tagInput, setTagInput] = useState('');
+
+  const toggleInArray = <T extends string>(field: keyof typeof form, value: T) => {
+    setForm((prev) => {
+      const arr = prev[field] as T[];
+      const next = arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
+      return { ...prev, [field]: next };
+    });
+  };
+
+  const addTag = () => {
+    const t = tagInput.trim().toLowerCase();
+    if (!t || form.tags.includes(t)) {
+      setTagInput('');
+      return;
+    }
+    setForm((prev) => ({ ...prev, tags: [...prev.tags, t] }));
+    setTagInput('');
+  };
+
+  const removeTag = (tag: string) => {
+    setForm((prev) => ({ ...prev, tags: prev.tags.filter((t) => t !== tag) }));
+  };
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -101,6 +141,12 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
         price: parseFloat(form.price),
         stock: parseInt(form.stock, 10),
         category: form.category,
+        productType: form.productType || undefined,
+        occasions: form.occasions,
+        tags: form.tags,
+        suitableFor: form.suitableFor,
+        ageGroup: form.ageGroup,
+        matchingItems: form.matchingItems,
         images: form.images,
         videoUrl: form.videoUrl.trim() || undefined,
         isFeatured: form.isFeatured,
@@ -192,6 +238,154 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
           </div>
         </div>
 
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Product Type
+            </label>
+            <select
+              value={form.productType}
+              onChange={(e) =>
+                setForm({ ...form, productType: e.target.value as ProductType | '' })
+              }
+              className="input-field"
+            >
+              <option value="">— select —</option>
+              {PRODUCT_TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">
+              Used by the budget bundler to assemble outfits.
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Suitable for
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {SUITABLE_FOR.map((s) => {
+                const on = form.suitableFor.includes(s);
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => toggleInArray<SuitableFor>('suitableFor', s)}
+                    className={`px-3 py-1 rounded-full text-sm border transition capitalize ${
+                      on
+                        ? 'bg-primary-600 text-white border-primary-600'
+                        : 'border-gray-300 text-gray-700 hover:border-primary-400'
+                    }`}
+                  >
+                    {s}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Occasions
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {OCCASIONS.map((o) => {
+              const on = form.occasions.includes(o);
+              return (
+                <button
+                  key={o}
+                  type="button"
+                  onClick={() => toggleInArray<Occasion>('occasions', o)}
+                  className={`px-3 py-1 rounded-full text-sm border transition capitalize ${
+                    on
+                      ? 'bg-primary-600 text-white border-primary-600'
+                      : 'border-gray-300 text-gray-700 hover:border-primary-400'
+                  }`}
+                >
+                  {o}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Age groups (kids)
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {AGE_GROUPS.map((a) => {
+              const on = form.ageGroup.includes(a);
+              return (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={() => toggleInArray<string>('ageGroup', a)}
+                  className={`px-3 py-1 rounded-full text-sm border transition ${
+                    on
+                      ? 'bg-primary-600 text-white border-primary-600'
+                      : 'border-gray-300 text-gray-700 hover:border-primary-400'
+                  }`}
+                >
+                  {a}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Tags
+          </label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {form.tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+              >
+                {tag}
+                <button
+                  type="button"
+                  onClick={() => removeTag(tag)}
+                  className="text-gray-400 hover:text-red-600"
+                  aria-label={`Remove ${tag}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  addTag();
+                }
+              }}
+              className="input-field flex-1"
+              placeholder="e.g. embroidered, black, premium"
+            />
+            <button
+              type="button"
+              onClick={addTag}
+              className="btn-outline"
+            >
+              Add
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Used to match style/color preferences in the goal-based recommender.
+          </p>
+        </div>
+
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
@@ -264,6 +458,14 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
           <p className="text-xs text-gray-500 mt-1">
             Supports youtube.com/watch, youtu.be, and youtube.com/shorts links.
           </p>
+        </div>
+
+        <div className="pt-4 border-t">
+          <MatchingItemsPicker
+            value={form.matchingItems}
+            excludeId={product?._id}
+            onChange={(ids) => setForm((prev) => ({ ...prev, matchingItems: ids }))}
+          />
         </div>
       </div>
 

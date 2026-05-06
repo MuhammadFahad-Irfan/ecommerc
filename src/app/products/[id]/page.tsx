@@ -22,6 +22,7 @@ interface PageProps {
 export default function ProductDetailPage({ params }: PageProps) {
   const { id } = params;
   const [product, setProduct] = useState<IProduct | null>(null);
+  const [matching, setMatching] = useState<IProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedImage, setSelectedImage] = useState(0);
@@ -35,6 +36,16 @@ export default function ProductDetailPage({ params }: PageProps) {
         setLoading(true);
         const data = await apiGet<IProduct>(`/products/${id}`);
         setProduct(data);
+        if (data.matchingItems?.length) {
+          const fetched = await Promise.all(
+            data.matchingItems.map((mid) =>
+              apiGet<IProduct>(`/products/${mid}`).catch(() => null)
+            )
+          );
+          setMatching(fetched.filter((p): p is IProduct => !!p));
+        } else {
+          setMatching([]);
+        }
       } catch (err) {
         const error = err as { message?: string };
         setError(error.message || 'Product not found');
@@ -256,6 +267,96 @@ export default function ProductDetailPage({ params }: PageProps) {
           </div>
         </div>
       </div>
+
+      {/* Complete the Look */}
+      {matching.length > 0 && (
+        <section className="mt-16">
+          <h2 className="text-2xl font-bold text-gray-900 mb-1">
+            Complete the Look
+          </h2>
+          <p className="text-gray-600 mb-6">
+            Hand-picked pieces that pair with this item.
+          </p>
+
+          <div className="bg-gray-50 rounded-2xl p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+              <p className="text-sm text-gray-700">
+                Outfit total:{' '}
+                <span className="font-semibold text-primary-700">
+                  {formatPrice(
+                    product.price + matching.reduce((s, m) => s + m.price, 0)
+                  )}
+                </span>{' '}
+                <span className="text-gray-500 text-xs">
+                  (this item + {matching.length}{' '}
+                  {matching.length === 1 ? 'pairing' : 'pairings'})
+                </span>
+              </p>
+              <button
+                onClick={() => {
+                  if (product.stock > 0) {
+                    addItem({
+                      productId: product._id,
+                      name: product.name,
+                      price: product.price,
+                      image: product.images?.[0] ?? '/placeholder.svg',
+                      stock: product.stock,
+                      quantity: 1,
+                    });
+                  }
+                  for (const m of matching) {
+                    if (m.stock > 0) {
+                      addItem({
+                        productId: m._id,
+                        name: m.name,
+                        price: m.price,
+                        image: m.images?.[0] ?? '/placeholder.svg',
+                        stock: m.stock,
+                        quantity: 1,
+                      });
+                    }
+                  }
+                  toast.success('Outfit added to cart');
+                }}
+                className="btn-primary text-sm"
+              >
+                Add full outfit to cart
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {matching.map((m) => (
+                <Link
+                  key={m._id}
+                  href={`/products/${m._id}`}
+                  className="group block bg-white rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition"
+                >
+                  <div className="relative aspect-square bg-gray-100">
+                    <Image
+                      src={m.images?.[0] || '/placeholder.svg'}
+                      alt={m.name}
+                      fill
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      className="object-cover group-hover:scale-105 transition"
+                    />
+                  </div>
+                  <div className="p-3">
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">
+                      {m.productType || m.category}
+                    </p>
+                    <p className="text-sm font-medium text-gray-900 line-clamp-1 group-hover:text-primary-600">
+                      {m.name}
+                    </p>
+                    <p className="text-sm font-bold text-primary-700 mt-0.5">
+                      {formatPrice(m.price)}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Reviews section */}
       <section className="mt-16">

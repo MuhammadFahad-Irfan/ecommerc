@@ -23,7 +23,8 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    { href: '/', label: 'Home' },
+    { href: '/shop-by-goal', label: 'Shop by Goal' },
+    { href: '/family-budget', label: 'Family Budget' },
     { href: '/products', label: 'Shop All' },
     { href: '/products?category=Women', label: 'Women' },
     { href: '/products?category=Child', label: 'Children' },
@@ -34,26 +35,32 @@ export default function Navbar() {
   return (
     <nav className="bg-white shadow-sm sticky top-0 z-40 border-b">
       <div className="container-custom">
-        <div className="flex items-center justify-between h-16">
-          <Link href="/" className="text-2xl font-bold text-primary-600">
+        <div className="flex items-center justify-between gap-6 h-16">
+          <Link
+            href="/"
+            className="text-2xl font-bold text-primary-600 shrink-0"
+          >
             Modest<span className="text-gray-900">Wear</span>
           </Link>
 
           {/* Desktop nav */}
-          <div className="hidden lg:flex items-center gap-8">
+          <div className="hidden xl:flex items-center gap-5 flex-1 justify-center">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-gray-700 hover:text-primary-600 font-medium transition"
+                className="text-gray-700 hover:text-primary-600 font-medium transition whitespace-nowrap"
               >
                 {link.label}
               </Link>
             ))}
           </div>
 
-          {/* Search bar (desktop) */}
-          <form onSubmit={handleSearch} className="hidden md:flex relative w-72">
+          {/* Search bar (desktop) — flex-shrinks on tighter screens */}
+          <form
+            onSubmit={handleSearch}
+            className="hidden md:flex relative flex-1 max-w-xs xl:max-w-[14rem]"
+          >
             <input
               type="text"
               placeholder="Search products..."
@@ -64,7 +71,7 @@ export default function Navbar() {
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
           </form>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 shrink-0">
             <Link
               href="/cart"
               className="relative p-2 text-gray-700 hover:text-primary-600 transition"
@@ -79,7 +86,7 @@ export default function Navbar() {
 
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="lg:hidden p-2 text-gray-700"
+              className="xl:hidden p-2 text-gray-700"
               aria-label="Toggle menu"
             >
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -89,7 +96,7 @@ export default function Navbar() {
 
         {/* Mobile menu */}
         {isOpen && (
-          <div className="lg:hidden py-4 border-t">
+          <div className="xl:hidden py-4 border-t">
             <form onSubmit={handleSearch} className="relative mb-4">
               <input
                 type="text"
