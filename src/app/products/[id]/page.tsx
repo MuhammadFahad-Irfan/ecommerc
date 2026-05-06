@@ -54,7 +54,7 @@ export default function ProductDetailPage({ params }: PageProps) {
       productId: product._id,
       name: product.name,
       price: product.price,
-      image: product.images[0],
+      image: product.images?.[0] ?? '/placeholder.svg',
       stock: product.stock,
       quantity,
     });
@@ -115,7 +115,7 @@ export default function ProductDetailPage({ params }: PageProps) {
         <div>
           <div className="relative aspect-square bg-gray-100 rounded-2xl overflow-hidden mb-4">
             <Image
-              src={product.images[selectedImage] || '/placeholder.png'}
+              src={product.images?.[selectedImage] || '/placeholder.svg'}
               alt={product.name}
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
@@ -123,7 +123,7 @@ export default function ProductDetailPage({ params }: PageProps) {
               priority
             />
           </div>
-          {product.images.length > 1 && (
+          {(product.images?.length ?? 0) > 1 && (
             <div className="grid grid-cols-5 gap-2">
               {product.images.map((img, idx) => (
                 <button

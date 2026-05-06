@@ -29,7 +29,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       productId: product._id,
       name: product.name,
       price: product.price,
-      image: product.images[0],
+      image: product.images?.[0] ?? '/placeholder.svg',
       stock: product.stock,
       quantity: 1,
     });
@@ -43,7 +43,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     >
       <div className="relative aspect-square bg-gray-100 image-zoom">
         <Image
-          src={product.images[0] || '/placeholder.png'}
+          src={product.images?.[0] || '/placeholder.svg'}
           alt={product.name}
           fill
           sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"

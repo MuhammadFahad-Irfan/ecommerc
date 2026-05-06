@@ -8,7 +8,10 @@ import 'dotenv/config';
 import mongoose from 'mongoose';
 import Product from '../models/Product';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ecommerce';
+const MONGODB_URI = process.env.MONGODB_URI ;
+
+const placeholder = (seed: string, n = 1) =>
+  Array.from({ length: n }, (_, i) => `https://picsum.photos/seed/${seed}-${i}/800/800`);
 
 const sampleProducts = [
   {
@@ -19,10 +22,7 @@ const sampleProducts = [
     category: 'Islamic',
     stock: 25,
     isFeatured: true,
-    images: [
-      'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?w=800',
-      'https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=800',
-    ],
+    images: placeholder('abaya', 2),
   },
   {
     name: 'Premium Burkha with Hijab Set',
@@ -32,7 +32,7 @@ const sampleProducts = [
     category: 'Islamic',
     stock: 40,
     isFeatured: true,
-    images: ['https://images.unsplash.com/photo-1591197172062-c718f82aba20?w=800'],
+    images: placeholder('burkha'),
   },
   {
     name: "Women's Embroidered Lawn Suit",
@@ -42,7 +42,7 @@ const sampleProducts = [
     category: 'Women',
     stock: 30,
     isFeatured: true,
-    images: ['https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800'],
+    images: placeholder('lawn-suit'),
   },
   {
     name: 'Designer Chiffon Party Wear',
@@ -52,7 +52,7 @@ const sampleProducts = [
     category: 'Women',
     stock: 15,
     isFeatured: true,
-    images: ['https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=800'],
+    images: placeholder('chiffon-party'),
   },
   {
     name: 'Casual Cotton Kurti',
@@ -62,7 +62,7 @@ const sampleProducts = [
     category: 'Women',
     stock: 50,
     isFeatured: false,
-    images: ['https://images.unsplash.com/photo-1583391733975-b29773c4e1f9?w=800'],
+    images: placeholder('cotton-kurti'),
   },
   {
     name: "Girls' Princess Frock",
@@ -72,7 +72,7 @@ const sampleProducts = [
     category: 'Child',
     stock: 35,
     isFeatured: true,
-    images: ['https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=800'],
+    images: placeholder('princess-frock'),
   },
   {
     name: "Boys' Casual Outfit Set",
@@ -82,7 +82,7 @@ const sampleProducts = [
     category: 'Child',
     stock: 45,
     isFeatured: false,
-    images: ['https://images.unsplash.com/photo-1518831959646-742c3a14ebf7?w=800'],
+    images: placeholder('boys-outfit'),
   },
   {
     name: 'Kids Eid Special Dress',
@@ -92,7 +92,7 @@ const sampleProducts = [
     category: 'Child',
     stock: 20,
     isFeatured: true,
-    images: ['https://images.unsplash.com/photo-1590739293931-c5fb9b89c7be?w=800'],
+    images: placeholder('kids-eid'),
   },
   {
     name: 'Modest Maxi Dress',
@@ -102,7 +102,7 @@ const sampleProducts = [
     category: 'Women',
     stock: 28,
     isFeatured: false,
-    images: ['https://images.unsplash.com/photo-1572804013427-4d7ca7268217?w=800'],
+    images: placeholder('maxi-dress'),
   },
   {
     name: 'Hijab Collection - Set of 5',
@@ -112,7 +112,7 @@ const sampleProducts = [
     category: 'Islamic',
     stock: 60,
     isFeatured: false,
-    images: ['https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=800'],
+    images: placeholder('hijab-set'),
   },
   {
     name: "Children's Modest Eid Suit",
@@ -122,7 +122,7 @@ const sampleProducts = [
     category: 'Child',
     stock: 30,
     isFeatured: false,
-    images: ['https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?w=800'],
+    images: placeholder('modest-eid-suit'),
   },
   {
     name: 'Premium Wedding Lehenga',
@@ -132,7 +132,7 @@ const sampleProducts = [
     category: 'Women',
     stock: 8,
     isFeatured: true,
-    images: ['https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?w=800'],
+    images: placeholder('wedding-lehenga', 2),
   },
 ];
 
@@ -145,7 +145,7 @@ const sampleReviews = [
 
 async function seed() {
   console.log('🌱 Connecting to MongoDB...');
-  await mongoose.connect(MONGODB_URI);
+  await mongoose.connect(MONGODB_URI as string);
   console.log('✅ Connected');
 
   console.log('🗑️  Clearing existing products...');

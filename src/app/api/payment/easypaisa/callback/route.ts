@@ -20,9 +20,8 @@ import { handleApiError } from '@/lib/apiHelpers';
 
 async function processCallback(req: NextRequest, params: Record<string, string>) {
   await dbConnect();
-
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-
+console.log("process.env.NEXT_PUBLIC_APP_URL ",process.env.NEXT_PUBLIC_APP_URL )
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL 
   // Map Easypaisa params (or our mock equivalents)
   const transactionId =
     params.orderRefNum || params.transactionId || params.txnId;

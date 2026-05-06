@@ -7,7 +7,7 @@ import axios, { AxiosError, AxiosRequestConfig } from 'axios';
 const api = axios.create({
   baseURL:
     typeof window === 'undefined'
-      ? process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3005/api'
+      ? process.env.NEXT_PUBLIC_API_URL as string
       : '/api',
   timeout: 20000,
   withCredentials: true,

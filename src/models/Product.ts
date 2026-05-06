@@ -12,7 +12,7 @@ export interface IProductDocument extends Document {
   name: string;
   description: string;
   price: number;
-  // images: string[];
+  images: string[];
   category: 'Child' | 'Women' | 'Islamic';
   stock: number;
   reviews: IReviewDocument[];
@@ -71,10 +71,10 @@ const ProductSchema = new Schema<IProductDocument>(
       required: [true, 'Product price is required'],
       min: [0, 'Price cannot be negative'],
     },
-    // images: {
-    //   type: [String],
-    //   default: [],
-    // },
+    images: {
+      type: [String],
+      default: [],
+    },
     category: {
       type: String,
       enum: {

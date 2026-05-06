@@ -15,10 +15,8 @@ const MERCHANT_ID = process.env.EASYPAISA_MERCHANT_ID || '';
 const STORE_ID = process.env.EASYPAISA_STORE_ID || '';
 const HASH_KEY = process.env.EASYPAISA_HASH_KEY || '';
 const EASYPAISA_URL =
-  process.env.EASYPAISA_API_URL || 'https://easypaisa.com.pk/easypay/Index.jsf';
-const RETURN_URL =
-  process.env.EASYPAISA_RETURN_URL ||
-  'http://localhost:3000/api/payment/easypaisa/callback';
+  process.env.EASYPAISA_API_URL ;
+const RETURN_URL = process.env.EASYPAISA_RETURN_URL as string ;
 
 export const IS_MOCK_PAYMENT = process.env.MOCK_PAYMENT === 'true';
 
@@ -66,8 +64,7 @@ export async function initiateEasypaisaPayment(
   // When MOCK_PAYMENT=true we skip the real gateway and return our own mock URL.
   // This lets you fully test the payment flow without an Easypaisa account.
   if (IS_MOCK_PAYMENT) {
-    const baseUrl =
-      process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl =process.env.NEXT_PUBLIC_APP_URL ;
     const redirectUrl = `${baseUrl}/payment/mock?orderId=${orderId}&txnId=${transactionId}&amount=${amount}`;
 
     return {
