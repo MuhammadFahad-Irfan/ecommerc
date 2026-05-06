@@ -27,6 +27,7 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
     stock: product?.stock?.toString() || '',
     category: product?.category || 'Women' as Category,
     images: product?.images || [] as string[],
+    videoUrl: product?.videoUrl || '',
     isFeatured: product?.isFeatured || false,
   });
 
@@ -101,6 +102,7 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
         stock: parseInt(form.stock, 10),
         category: form.category,
         images: form.images,
+        videoUrl: form.videoUrl.trim() || undefined,
         isFeatured: form.isFeatured,
       };
 
@@ -247,6 +249,22 @@ export default function ProductForm({ product, mode }: ProductFormProps) {
         <button type="button" onClick={addImageUrl} className="text-sm text-primary-600 hover:underline">
           + Add image by URL
         </button>
+
+        <div className="pt-4 border-t">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            YouTube Video URL <span className="text-gray-400 font-normal">(optional)</span>
+          </label>
+          <input
+            type="url"
+            value={form.videoUrl}
+            onChange={(e) => setForm({ ...form, videoUrl: e.target.value })}
+            className="input-field"
+            placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            Supports youtube.com/watch, youtu.be, and youtube.com/shorts links.
+          </p>
+        </div>
       </div>
 
       <div className="flex gap-3 justify-end">

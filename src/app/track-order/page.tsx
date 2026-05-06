@@ -9,19 +9,23 @@ import type { IOrder } from '@/types';
 
 export default function TrackOrderPage() {
   const [orderNumber, setOrderNumber] = useState('');
+  const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [order, setOrder] = useState<IOrder | null>(null);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const trimmed = orderNumber.trim();
-    if (!trimmed) return;
+    const trimmedOrder = orderNumber.trim();
+    const trimmedPhone = phone.trim();
+    if (!trimmedOrder || !trimmedPhone) return;
 
     setLoading(true);
     setOrder(null);
     try {
       const result = await apiGet<IOrder>(
-        `/orders/lookup?orderNumber=${encodeURIComponent(trimmed)}`
+        `/orders/lookup?orderNumber=${encodeURIComponent(
+          trimmedOrder
+        )}&phone=${encodeURIComponent(trimmedPhone)}`
       );
       setOrder(result);
     } catch (err) {
@@ -46,35 +50,54 @@ export default function TrackOrderPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="bg-white border border-gray-200 rounded-lg p-6 mb-8"
+        className="bg-white border border-gray-200 rounded-lg p-6 mb-8 space-y-4"
       >
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Order Number
-        </label>
-        <div className="flex gap-2">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Order Number
+          </label>
           <input
             type="text"
             required
             value={orderNumber}
             onChange={(e) => setOrderNumber(e.target.value)}
             placeholder="ORD-XXXXXXX-XXXX"
-            className="input-field flex-1"
+            className="input-field w-full"
             autoFocus
           />
-          <button
-            type="submit"
-            disabled={loading}
-            className="btn-primary inline-flex items-center gap-2"
-          >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Search className="h-4 w-4" />
-            )}
-            Track
-          </button>
         </div>
-        <p className="text-xs text-gray-500 mt-2">
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Phone Number
+          </label>
+          <input
+            type="tel"
+            required
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="0300-1234567"
+            className="input-field w-full"
+          />
+          <p className="text-xs text-gray-500 mt-1">
+            The phone number you used at checkout.
+          </p>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="btn-primary inline-flex items-center gap-2 w-full justify-center"
+        >
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Search className="h-4 w-4" />
+          )}
+          Track Order
+        </button>
+
+        <p className="text-xs text-gray-500">
           Your order number is on the order confirmation page or receipt.
         </p>
       </form>

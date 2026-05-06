@@ -67,6 +67,37 @@ export function debounce<T extends (...args: never[]) => void>(
 }
 
 /**
+ * Convert a YouTube URL or bare 11-char video ID into the canonical embed URL.
+ * Returns null if the input doesn't look like a YouTube reference.
+ */
+export function getYouTubeEmbedUrl(input: string | undefined | null): string | null {
+  if (!input) return null;
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+
+  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) {
+    return `https://www.youtube.com/embed/${trimmed}`;
+  }
+
+  try {
+    const url = new URL(trimmed.startsWith('http') ? trimmed : `https://${trimmed}`);
+    if (url.hostname === 'youtu.be') {
+      const id = url.pathname.slice(1).split('/')[0];
+      if (id) return `https://www.youtube.com/embed/${id}`;
+    }
+    if (url.hostname.endsWith('youtube.com') || url.hostname.endsWith('youtube-nocookie.com')) {
+      const v = url.searchParams.get('v');
+      if (v) return `https://www.youtube.com/embed/${v}`;
+      const m = url.pathname.match(/^\/(?:shorts|embed)\/([^/?]+)/);
+      if (m) return `https://www.youtube.com/embed/${m[1]}`;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+/**
  * Build query string from object
  */
 export function buildQueryString(params: Record<string, string | number | undefined | null>): string {

@@ -145,6 +145,7 @@ export const POST = asyncHandler(async (req: NextRequest) => {
   await dbConnect();
 
   const body = await req.json();
+  console.log('Received POST /api/products with body:', body);
   const result = productSchema.safeParse(body);
 
   if (!result.success) {

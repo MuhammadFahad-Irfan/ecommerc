@@ -3,15 +3,16 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ShoppingCart, Minus, Plus, Check, ArrowLeft } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, Check, ArrowLeft, ZoomIn } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { apiGet } from '@/lib/api';
 import { useCart } from '@/context/CartContext';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, getYouTubeEmbedUrl } from '@/lib/utils';
 import StarRating from '@/components/StarRating';
 import ReviewForm from '@/components/ReviewForm';
 import ReviewList from '@/components/ReviewList';
 import Loader from '@/components/Loader';
+import ImageZoomModal from '@/components/ImageZoomModal';
 import type { IProduct, IReview } from '@/types';
 
 interface PageProps {
@@ -24,6 +25,7 @@ export default function ProductDetailPage({ params }: PageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedImage, setSelectedImage] = useState(0);
+  const [zoomIndex, setZoomIndex] = useState<number | null>(null);
   const [quantity, setQuantity] = useState(1);
   const { addItem } = useCart();
 
@@ -113,7 +115,13 @@ export default function ProductDetailPage({ params }: PageProps) {
       <div className="grid lg:grid-cols-2 gap-8">
         {/* Image gallery */}
         <div>
-          <div className="relative aspect-square bg-gray-100 rounded-2xl overflow-hidden mb-4">
+          <button
+            type="button"
+            onClick={() => product.images?.length && setZoomIndex(selectedImage)}
+            disabled={!product.images?.length}
+            className="group relative aspect-square w-full bg-gray-100 rounded-2xl overflow-hidden mb-4 cursor-zoom-in disabled:cursor-default"
+            aria-label="Zoom image"
+          >
             <Image
               src={product.images?.[selectedImage] || '/placeholder.svg'}
               alt={product.name}
@@ -122,24 +130,53 @@ export default function ProductDetailPage({ params }: PageProps) {
               className="object-cover"
               priority
             />
-          </div>
+            {!!product.images?.length && (
+              <span className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full inline-flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                <ZoomIn className="h-3 w-3" /> Click to zoom
+              </span>
+            )}
+          </button>
           {(product.images?.length ?? 0) > 1 && (
             <div className="grid grid-cols-5 gap-2">
               {product.images.map((img, idx) => (
                 <button
                   key={idx}
                   onClick={() => setSelectedImage(idx)}
-                  className={`relative aspect-square rounded-lg overflow-hidden border-2 transition ${
+                  onDoubleClick={() => setZoomIndex(idx)}
+                  className={`relative aspect-square rounded-lg overflow-hidden border-2 transition cursor-zoom-in ${
                     selectedImage === idx
                       ? 'border-primary-600'
                       : 'border-transparent hover:border-gray-300'
                   }`}
+                  title="Click to select, double-click to zoom"
                 >
                   <Image src={img} alt={`${product.name} ${idx + 1}`} fill sizes="20vw" className="object-cover" />
                 </button>
               ))}
             </div>
           )}
+
+          {/* YouTube video */}
+          {(() => {
+            const embed = getYouTubeEmbedUrl(product.videoUrl);
+            if (!embed) return null;
+            return (
+              <div className="mt-4">
+                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-2">
+                  Product Video
+                </h3>
+                <div className="relative aspect-video rounded-2xl overflow-hidden bg-black">
+                  <iframe
+                    src={embed}
+                    title={`${product.name} video`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    className="absolute inset-0 w-full h-full"
+                  />
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         {/* Product info */}
@@ -238,6 +275,15 @@ export default function ProductDetailPage({ params }: PageProps) {
           </div>
         </div>
       </section>
+
+      {zoomIndex !== null && product.images?.length > 0 && (
+        <ImageZoomModal
+          images={product.images}
+          initialIndex={zoomIndex}
+          alt={product.name}
+          onClose={() => setZoomIndex(null)}
+        />
+      )}
     </div>
   );
 }

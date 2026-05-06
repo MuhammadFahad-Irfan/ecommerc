@@ -13,6 +13,7 @@ export interface IProductDocument extends Document {
   description: string;
   price: number;
   images: string[];
+  videoUrl?: string;
   category: 'Child' | 'Women' | 'Islamic';
   stock: number;
   reviews: IReviewDocument[];
@@ -74,6 +75,10 @@ const ProductSchema = new Schema<IProductDocument>(
     images: {
       type: [String],
       default: [],
+    },
+    videoUrl: {
+      type: String,
+      trim: true,
     },
     category: {
       type: String,

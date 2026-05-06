@@ -44,6 +44,7 @@ export const PUT = asyncHandler(async (req: NextRequest, { params }: RouteParams
 
   const body = await req.json();
   // Allow partial updates
+  console.log('Received PUT /api/products/[id] with body:', body);
   const result = productSchema.partial().safeParse(body);
 
   if (!result.success) {

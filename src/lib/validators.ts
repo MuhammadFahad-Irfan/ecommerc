@@ -6,11 +6,19 @@ export const reviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
 });
 
+const youtubeUrlPattern = /^(https?:\/\/)?(www\.)?(youtube\.com\/(watch\?v=|embed\/|shorts\/)|youtu\.be\/)[\w-]{6,}/i;
+
 export const productSchema = z.object({
   name: z.string().trim().min(2).max(200),
   description: z.string().trim().min(10),
   price: z.number().min(0),
   images: z.array(z.string().url()).optional().default([]),
+  videoUrl: z
+    .string()
+    .trim()
+    .regex(youtubeUrlPattern, 'Must be a YouTube URL')
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
   category: z.enum(['Child', 'Women', 'Islamic']),
   stock: z.number().int().min(0),
   isFeatured: z.boolean().optional().default(false),

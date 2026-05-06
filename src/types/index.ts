@@ -18,6 +18,7 @@ export interface IProduct {
   description: string;
   price: number;
   images: string[];
+  videoUrl?: string;
   category: Category;
   stock: number;
   reviews: IReview[];
