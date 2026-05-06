@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
+import Image from '@/components/ProductImage';
 import { Search, X, Loader2 } from 'lucide-react';
 import { apiGet } from '@/lib/api';
 import { formatPrice } from '@/lib/utils';

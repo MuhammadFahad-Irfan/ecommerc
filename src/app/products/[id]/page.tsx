@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
+import Image from '@/components/ProductImage';
 import Link from 'next/link';
 import { ShoppingCart, Minus, Plus, Check, ArrowLeft, ZoomIn } from 'lucide-react';
 import toast from 'react-hot-toast';

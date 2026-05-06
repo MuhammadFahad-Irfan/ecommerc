@@ -2,7 +2,7 @@
 
 import { useState, FormEvent, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import Image from '@/components/ProductImage';
 import toast from 'react-hot-toast';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { apiPost, apiPut } from '@/lib/api';

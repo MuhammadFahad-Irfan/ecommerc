@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import Image from '@/components/ProductImage';
 import { CheckCircle, Clock, XCircle, Package } from 'lucide-react';
 import { apiGet } from '@/lib/api';
 import { formatPrice, formatDate } from '@/lib/utils';

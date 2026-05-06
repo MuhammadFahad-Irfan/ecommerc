@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import Image from '@/components/ProductImage';
 import toast from 'react-hot-toast';
 import { Plus, Edit2, Trash2, Search } from 'lucide-react';
 import { apiGet, apiDelete } from '@/lib/api';
