@@ -24,11 +24,13 @@ export default function Navbar() {
 
   const navLinks = [
     { href: '/shop-by-goal', label: 'Shop by Goal' },
-    { href: '/family-budget', label: 'Family Budget' },
     { href: '/products', label: 'Shop All' },
     { href: '/products?category=Women', label: 'Women' },
     { href: '/products?category=Child', label: 'Children' },
     { href: '/products?category=Islamic', label: 'Islamic' },
+    { href: '/products?category=Jewellery', label: 'Jewellery' },
+    { href: '/products?category=Shoes', label: 'Shoes' },
+    { href: '/products?category=Bags', label: 'Bags' },
     { href: '/track-order', label: 'Track Order' },
   ];
 

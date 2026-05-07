@@ -8,7 +8,7 @@ export interface IReviewDocument {
   createdAt: Date;
 }
 
-export type ProductType = 'abaya' | 'hijab' | 'cap' | 'frock' | 'set' | 'other';
+export type ProductType = 'abaya' | 'hijab' | 'cap' | 'frock' | 'set' | 'jewellery' | 'shoes' | 'bag' | 'other';
 export type Occasion = 'daily' | 'wedding' | 'eid' | 'prayer' | 'school' | 'gift' | 'travel';
 export type SuitableFor = 'women' | 'kids';
 
@@ -18,7 +18,7 @@ export interface IProductDocument extends Document {
   price: number;
   images: string[];
   videoUrl?: string;
-  category: 'Child' | 'Women' | 'Islamic';
+  category: 'Child' | 'Women' | 'Islamic' | 'Jewellery' | 'Shoes' | 'Bags';
   productType?: ProductType;
   occasions: Occasion[];
   tags: string[];
@@ -93,7 +93,7 @@ const ProductSchema = new Schema<IProductDocument>(
     category: {
       type: String,
       enum: {
-        values: ['Child', 'Women', 'Islamic'],
+        values: ['Child', 'Women', 'Islamic', 'Jewellery', 'Shoes', 'Bags'],
         message: '{VALUE} is not a valid category',
       },
       required: [true, 'Category is required'],
@@ -123,7 +123,7 @@ const ProductSchema = new Schema<IProductDocument>(
     },
     productType: {
       type: String,
-      enum: ['abaya', 'hijab', 'cap', 'frock', 'set', 'other'],
+      enum: ['abaya', 'hijab', 'cap', 'frock', 'set', 'jewellery', 'shoes', 'bag', 'other'],
       index: true,
     },
     occasions: {

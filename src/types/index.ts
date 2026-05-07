@@ -1,8 +1,8 @@
 // Shared TypeScript types used across frontend & backend.
 // Keeping these in sync makes future mobile app integration easier.
 
-export type Category = 'Child' | 'Women' | 'Islamic';
-export type ProductType = 'abaya' | 'hijab' | 'cap' | 'frock' | 'set' | 'other';
+export type Category = 'Child' | 'Women' | 'Islamic' | 'Jewellery' | 'Shoes' | 'Bags';
+export type ProductType = 'abaya' | 'hijab' | 'cap' | 'frock' | 'set' | 'jewellery' | 'shoes' | 'bag' | 'other';
 export type Occasion = 'daily' | 'wedding' | 'eid' | 'prayer' | 'school' | 'gift' | 'travel';
 export type SuitableFor = 'women' | 'kids';
 

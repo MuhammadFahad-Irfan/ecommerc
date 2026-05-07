@@ -1,10 +1,9 @@
 /**
  * Recommendation engine for the guided shopping experience.
  *
- * Three pure functions, each returning curated results (≤6) based on:
+ * Two pure functions, each returning curated results (≤6) based on:
  *  - getByGoal:        intent + contextual answers + optional budget
  *  - getBudgetBundles: bundles that fit a hard price ceiling
- *  - getFamilyBudget:  budget split across mother + N kids
  *
  * Filters are applied softly when product metadata is missing — i.e. an
  * unclassified product is preferred over an empty result set, so the engine
@@ -204,79 +203,4 @@ export async function getBudgetBundles(budget: number): Promise<BudgetBundle[]> 
   }
 
   return bundles.slice(0, 3);
-}
-
-export interface FamilyMember {
-  type: 'mother' | 'kid';
-  age?: number;
-}
-
-export interface FamilyRecommendation {
-  member: FamilyMember;
-  budgetShare: number;
-  recommendations: IProductDocument[];
-}
-
-/**
- * Split family budget: mother gets ~50%, kids share the remaining ~50% evenly.
- * Returns up to 3 product suggestions per member, all within their share.
- */
-export async function getFamilyBudget(
-  budget: number,
-  members: FamilyMember[]
-): Promise<FamilyRecommendation[]> {
-  if (!budget || budget <= 0 || !members?.length) return [];
-
-  const motherCount = members.filter((m) => m.type === 'mother').length;
-  const kidCount = members.filter((m) => m.type === 'kid').length;
-
-  const motherShare = motherCount > 0 ? (budget * 0.5) / motherCount : 0;
-  const kidShare = kidCount > 0 ? (budget * (motherCount > 0 ? 0.5 : 1)) / kidCount : 0;
-
-  const results: FamilyRecommendation[] = [];
-
-  for (const member of members) {
-    const isMother = member.type === 'mother';
-    const share = isMother ? motherShare : kidShare;
-    const audience: SuitableFor = isMother ? 'women' : 'kids';
-
-    const filter: FilterQuery<IProductDocument> = {
-      price: { $lte: share },
-      $or: [
-        { suitableFor: audience },
-        { suitableFor: { $size: 0 } },
-      ],
-    };
-
-    if (!isMother && member.age) {
-      const range = ageToRange(member.age);
-      if (range) {
-        filter.$and = [
-          {
-            $or: [
-              { ageGroup: range },
-              { ageGroup: { $size: 0 } },
-            ],
-          },
-        ];
-      }
-    }
-
-    const products = await Product.find(filter)
-      .select('-reviews.ipAddress')
-      .sort({ isFeatured: -1, averageRating: -1, price: -1 })
-      .limit(3)
-      .lean<IProductDocument[]>();
-
-    results.push({ member, budgetShare: share, recommendations: products });
-  }
-
-  return results;
-}
-
-function ageToRange(age: number): string | null {
-  if (age <= 5) return '3-5';
-  if (age <= 10) return '6-10';
-  if (age <= 14) return '11-14';
-  return null;
 }

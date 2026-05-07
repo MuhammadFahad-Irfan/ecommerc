@@ -19,9 +19,9 @@ export const productSchema = z.object({
     .regex(youtubeUrlPattern, 'Must be a YouTube URL')
     .optional()
     .or(z.literal('').transform(() => undefined)),
-  category: z.enum(['Child', 'Women', 'Islamic']),
+  category: z.enum(['Child', 'Women', 'Islamic', 'Jewellery', 'Shoes', 'Bags']),
   productType: z
-    .enum(['abaya', 'hijab', 'cap', 'frock', 'set', 'other'])
+    .enum(['abaya', 'hijab', 'cap', 'frock', 'set', 'jewellery', 'shoes', 'bag', 'other'])
     .optional(),
   occasions: z
     .array(z.enum(['daily', 'wedding', 'eid', 'prayer', 'school', 'gift', 'travel']))

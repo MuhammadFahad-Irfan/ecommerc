@@ -24,8 +24,17 @@ interface SeedProduct {
   name: string;
   description: string;
   price: number;
-  category: 'Child' | 'Women' | 'Islamic';
-  productType?: 'abaya' | 'hijab' | 'cap' | 'frock' | 'set' | 'other';
+  category: 'Child' | 'Women' | 'Islamic' | 'Jewellery' | 'Shoes' | 'Bags';
+  productType?:
+    | 'abaya'
+    | 'hijab'
+    | 'cap'
+    | 'frock'
+    | 'set'
+    | 'jewellery'
+    | 'shoes'
+    | 'bag'
+    | 'other';
   occasions?: Array<'daily' | 'wedding' | 'eid' | 'prayer' | 'school' | 'gift' | 'travel'>;
   tags?: string[];
   suitableFor?: Array<'women' | 'kids'>;
@@ -94,7 +103,12 @@ const sampleProducts: SeedProduct[] = [
     stock: 15,
     isFeatured: true,
     images: placeholder('chiffon-party'),
-    _matches: ['Plain Soft Hijab'],
+    _matches: [
+      'Plain Soft Hijab',
+      'Everyday Pearl Drop Earrings',
+      'Embellished Bridal Heels',
+      'Embellished Bridal Clutch',
+    ],
   },
   {
     name: 'Casual Cotton Kurti',
@@ -109,6 +123,7 @@ const sampleProducts: SeedProduct[] = [
     stock: 50,
     isFeatured: false,
     images: placeholder('cotton-kurti'),
+    _matches: ['Everyday Comfort Flats', 'Everyday Tote Bag'],
   },
   {
     name: "Girls' Princess Frock",
@@ -139,6 +154,7 @@ const sampleProducts: SeedProduct[] = [
     stock: 45,
     isFeatured: false,
     images: placeholder('boys-outfit'),
+    _matches: ['Kids School Sneakers'],
   },
   {
     name: 'Kids Eid Special Dress',
@@ -154,6 +170,7 @@ const sampleProducts: SeedProduct[] = [
     stock: 20,
     isFeatured: true,
     images: placeholder('kids-eid'),
+    _matches: ['Kids Charm Bracelet'],
   },
   {
     name: 'Modest Maxi Dress',
@@ -212,7 +229,130 @@ const sampleProducts: SeedProduct[] = [
     stock: 8,
     isFeatured: true,
     images: placeholder('wedding-lehenga', 2),
-    _matches: ['Plain Soft Hijab', 'Hijab Collection - Set of 5'],
+    _matches: [
+      'Plain Soft Hijab',
+      'Hijab Collection - Set of 5',
+      'Bridal Statement Necklace Set',
+      'Embellished Bridal Heels',
+      'Embellished Bridal Clutch',
+    ],
+  },
+  // Jewellery — cross-sells onto wedding/eid/festive anchor pieces.
+  {
+    name: 'Bridal Statement Necklace Set',
+    description:
+      'Heavy gold-plated bridal set with intricate kundan-style work. Includes necklace, jhumka earrings, and matching maang tikka. The finishing touch for your wedding look.',
+    price: 6500,
+    category: 'Jewellery',
+    productType: 'jewellery',
+    occasions: ['wedding', 'eid'],
+    tags: ['premium', 'heavy', 'gold'],
+    suitableFor: ['women'],
+    stock: 15,
+    isFeatured: true,
+    images: placeholder('bridal-jewellery'),
+  },
+  {
+    name: 'Everyday Pearl Drop Earrings',
+    description:
+      'Delicate pearl drop earrings perfect for daily wear, work, or casual gatherings. Lightweight, hypoallergenic backing, and a versatile design that pairs with any outfit.',
+    price: 1200,
+    category: 'Jewellery',
+    productType: 'jewellery',
+    occasions: ['daily', 'gift', 'travel'],
+    tags: ['simple', 'pastel', 'lightweight'],
+    suitableFor: ['women'],
+    stock: 60,
+    isFeatured: false,
+    images: placeholder('pearl-earrings'),
+  },
+  {
+    name: "Kids Charm Bracelet",
+    description:
+      'Adorable charm bracelet for little ones. Adjustable size, hypoallergenic finish, and a mix of pastel charms. Great as a gift for birthdays or Eid.',
+    price: 600,
+    category: 'Jewellery',
+    productType: 'jewellery',
+    occasions: ['gift', 'eid'],
+    tags: ['simple', 'pastel'],
+    suitableFor: ['kids'],
+    ageGroup: ['3-5', '6-10'],
+    stock: 40,
+    isFeatured: false,
+    images: placeholder('kids-bracelet'),
+  },
+  // Shoes — cross-sell onto outfits as "complete the look" footwear.
+  {
+    name: 'Embellished Bridal Heels',
+    description:
+      'Hand-embellished heels with crystal detailing. Padded insoles for all-day comfort. The perfect finishing touch for wedding and Eid outfits.',
+    price: 4500,
+    category: 'Shoes',
+    productType: 'shoes',
+    occasions: ['wedding', 'eid'],
+    tags: ['premium', 'embroidered'],
+    suitableFor: ['women'],
+    stock: 18,
+    isFeatured: true,
+    images: placeholder('bridal-heels'),
+  },
+  {
+    name: 'Everyday Comfort Flats',
+    description:
+      'Soft cushioned flats designed for daily wear. Lightweight, anti-skid sole, and a versatile design that pairs with kurtis and abayas.',
+    price: 1800,
+    category: 'Shoes',
+    productType: 'shoes',
+    occasions: ['daily', 'travel', 'prayer'],
+    tags: ['simple', 'lightweight'],
+    suitableFor: ['women'],
+    stock: 50,
+    isFeatured: false,
+    images: placeholder('comfort-flats'),
+  },
+  {
+    name: 'Kids School Sneakers',
+    description:
+      'Durable school sneakers with grippy sole and breathable mesh upper. Easy slip-on style with velcro for quick wear.',
+    price: 1500,
+    category: 'Shoes',
+    productType: 'shoes',
+    occasions: ['school', 'daily'],
+    tags: ['simple', 'lightweight'],
+    suitableFor: ['kids'],
+    ageGroup: ['3-5', '6-10'],
+    stock: 60,
+    isFeatured: false,
+    images: placeholder('kids-sneakers'),
+  },
+  // Bags — cross-sell onto outfits and gift flows.
+  {
+    name: 'Embellished Bridal Clutch',
+    description:
+      'Heavily embellished clutch with detachable chain. Roomy enough for essentials, designed to elevate wedding and party looks.',
+    price: 2800,
+    category: 'Bags',
+    productType: 'bag',
+    occasions: ['wedding', 'eid'],
+    tags: ['premium', 'embroidered'],
+    suitableFor: ['women'],
+    stock: 22,
+    isFeatured: true,
+    images: placeholder('bridal-clutch'),
+  },
+  {
+    name: 'Everyday Tote Bag',
+    description:
+      'Roomy canvas tote with inner pockets and a magnetic closure. Built for daily errands, travel, and carrying it all without sacrificing style.',
+    price: 1600,
+    category: 'Bags',
+    productType: 'bag',
+    occasions: ['daily', 'travel'],
+    tags: ['simple', 'lightweight'],
+    suitableFor: ['women'],
+    stock: 45,
+    isFeatured: false,
+    images: placeholder('everyday-tote'),
   },
   // Accessory anchors below — these power the budget bundler so anchor
   // items (abaya/frock/set) can be paired with a hijab + cap under budget.

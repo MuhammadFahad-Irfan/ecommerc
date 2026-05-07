@@ -55,6 +55,24 @@ const CATEGORIES = [
     image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&q=80',
     description: 'Burkha & modest wear',
   },
+  {
+    name: 'Jewellery',
+    slug: 'Jewellery',
+    image: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600&q=80',
+    description: 'Statement pieces & everyday accents',
+  },
+  {
+    name: 'Shoes',
+    slug: 'Shoes',
+    image: 'https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=600&q=80',
+    description: 'Heels, flats & comfort everyday',
+  },
+  {
+    name: 'Bags',
+    slug: 'Bags',
+    image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=600&q=80',
+    description: 'Clutches, totes & travel-ready',
+  },
 ];
 
 export default async function HomePage() {
@@ -138,7 +156,7 @@ export default async function HomePage() {
           Find the perfect outfit for every occasion
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {CATEGORIES.map((cat) => (
             <Link
               key={cat.slug}
@@ -149,7 +167,7 @@ export default async function HomePage() {
                 src={cat.image}
                 alt={cat.name}
                 fill
-                sizes="(min-width: 768px) 33vw, 100vw"
+                sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                 className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
